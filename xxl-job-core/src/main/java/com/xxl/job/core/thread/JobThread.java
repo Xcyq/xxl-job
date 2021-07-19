@@ -31,6 +31,10 @@ public class JobThread extends Thread{
 	private IJobHandler handler;
 	private LinkedBlockingQueue<TriggerParam> triggerQueue;
 	private Set<Long> triggerLogIdSet;		// avoid repeat trigger for the same TRIGGER_LOG_ID
+	private static final ExecutorService timeoutExecutorService = new ThreadPoolExecutor(0,
+			Integer.MAX_VALUE, // maximumPoolSize is Integer.MAX_VALUE, for perform tasks on time. But cost is may be oom.
+			60L, TimeUnit.SECONDS,
+			new SynchronousQueue<>());
 
 	private volatile boolean toStop = false;
 	private String stopReason;
@@ -125,27 +129,18 @@ public class JobThread extends Thread{
 
 					if (triggerParam.getExecutorTimeout() > 0) {
 						// limit timeout
-						Thread futureThread = null;
+						final TriggerParam triggerParamTmp = triggerParam;
+						Future<ReturnT<String>> future = timeoutExecutorService.submit(() -> handler.execute(triggerParamTmp.getExecutorParams()));
 						try {
-							final TriggerParam triggerParamTmp = triggerParam;
-							FutureTask<ReturnT<String>> futureTask = new FutureTask<ReturnT<String>>(new Callable<ReturnT<String>>() {
-								@Override
-								public ReturnT<String> call() throws Exception {
-									return handler.execute(triggerParamTmp.getExecutorParams());
-								}
-							});
-							futureThread = new Thread(futureTask);
-							futureThread.start();
-
-							executeResult = futureTask.get(triggerParam.getExecutorTimeout(), TimeUnit.SECONDS);
+							executeResult = future.get(triggerParam.getExecutorTimeout(), TimeUnit.SECONDS);
 						} catch (TimeoutException e) {
-
 							XxlJobLogger.log("<br>----------- xxl-job job execute timeout");
 							XxlJobLogger.log(e);
-
-							executeResult = new ReturnT<String>(IJobHandler.FAIL_TIMEOUT.getCode(), "job execute timeout ");
+							executeResult = new ReturnT<>(IJobHandler.FAIL_TIMEOUT.getCode(), "job execute timeout ");
 						} finally {
-							futureThread.interrupt();
+							if (!future.isDone()) {
+								future.cancel(true);
+							}
 						}
 					} else {
 						// just execute
