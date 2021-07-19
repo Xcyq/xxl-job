@@ -23,27 +23,27 @@ public class XxlJobLogger {
      * @param appendLog
      */
     private static void logDetail(StackTraceElement callInfo, String appendLog) {
-
+        logger.info("[xxl-job] [{}]", appendLog);
 
         /*// "yyyy-MM-dd HH:mm:ss [ClassName]-[MethodName]-[LineNumber]-[ThreadName] log";
         StackTraceElement[] stackTraceElements = new Throwable().getStackTrace();
         StackTraceElement callInfo = stackTraceElements[1];*/
 
-        StringBuffer stringBuffer = new StringBuffer();
-        stringBuffer.append(DateUtil.formatDateTime(new Date())).append(" ")
-            .append("["+ callInfo.getClassName() + "#" + callInfo.getMethodName() +"]").append("-")
-            .append("["+ callInfo.getLineNumber() +"]").append("-")
-            .append("["+ Thread.currentThread().getName() +"]").append(" ")
-            .append(appendLog!=null?appendLog:"");
-        String formatAppendLog = stringBuffer.toString();
-
-        // appendlog
-        String logFileName = XxlJobFileAppender.contextHolder.get();
-        if (logFileName!=null && logFileName.trim().length()>0) {
-            XxlJobFileAppender.appendLog(logFileName, formatAppendLog);
-        } else {
-            logger.info(">>>>>>>>>>> {}", formatAppendLog);
-        }
+//        StringBuffer stringBuffer = new StringBuffer();
+//        stringBuffer.append(DateUtil.formatDateTime(new Date())).append(" ")
+//            .append("["+ callInfo.getClassName() + "#" + callInfo.getMethodName() +"]").append("-")
+//            .append("["+ callInfo.getLineNumber() +"]").append("-")
+//            .append("["+ Thread.currentThread().getName() +"]").append(" ")
+//            .append(appendLog!=null?appendLog:"");
+//        String formatAppendLog = stringBuffer.toString();
+//
+//        // appendlog
+//        String logFileName = XxlJobFileAppender.contextHolder.get();
+//        if (logFileName!=null && logFileName.trim().length()>0) {
+//            XxlJobFileAppender.appendLog(logFileName, formatAppendLog);
+//        } else {
+//            logger.info(">>>>>>>>>>> {}", formatAppendLog);
+//        }
     }
 
     /**
